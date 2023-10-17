@@ -1,56 +1,110 @@
-import turtle
 import random
-import time
+import turtle
 
-# Window settings
-turtle.setup(width=750, height=750)
-background = turtle.Screen()
-background.bgcolor("black")
+#setting up the screen
+screen = turtle.Screen()
+screen.bgcolor("purple")
+game_over = False
+score = 0
+FONT = ('Arial', 30, 'normal')
 
-# Create a turtle
-turtie = turtle.Turtle()
-turtie.shape("turtle")
-turtie.shapesize(2)  # Set the size to 1x1 for the hitbox
-turtie.color("yellow")
+# empty turtle list for to catch turtle loc here
+turtle_list = []
 
-# Set the speed of the turtle
-turtie.speed(1)
+# +1 turtle for counter
+count_down_turtle = turtle.Turtle()
 
-# Function for random positioning of the turtle
-def change_random_location():
-    x = random.randint(-365, 365)  # Random x coordinate
-    y = random.randint(-365, 365)
-    turtie.penup()  # Do not draw anything
-    turtie.goto(x, y)
-    time.sleep(0.5)  # Pause for half a second
+# +1 turtle for counting score
+score_turtle = turtle.Turtle()
 
-# Mouse click inputs
-def increment_counter(x, y):
-    global step_counter, hit_counter
-    step_counter += 1
-    counter.clear()
-    counter.write("Step Count: " + str(step_counter) + " - Hit Count: " + str(hit_counter), align="center", font=("Arial", 16, "normal"))
-    # Control for catching the turtle
-    x_turtle, y_turtle = turtie.pos()
-    if abs(x - x_turtle) < 20 and abs(y - y_turtle) < 20:
-        hit_counter += 1
+# score function
 
-# Add the counter and hit counter
-counter = turtle.Turtle()
-counter.penup()
-counter.color("white")
-counter.hideturtle()
-counter.goto(0, 350)
-counter.write("Step Count: 0 - Hit Count: 0", align="center", font=("Arial", 16, "normal"))
+def setup_score_turtle():
+    score_turtle.hideturtle()
+    score_turtle.color("blue")
+    score_turtle.penup()
 
-# Start the step counter and hit counter
-step_counter = 0
-hit_counter = 0
+    top_height = screen.window_height() / 2
+    y = top_height - top_height / 10
+    score_turtle.setposition(0, y)
+    score_turtle.write(arg='Score: 0', move=False, align='center', font=FONT)
 
-# Listen for mouse click events
-turtle.onscreenclick(increment_counter)
+grid_size = 10
 
-# Start an infinite loop
-while True:
-    change_random_location()
-    turtle.update()
+# turtle maker
+
+def make_turtle(x, y):
+    t = turtle.Turtle()
+
+    def handle_click(x, y):
+        global score
+        score += 1
+        score_turtle.clear()
+        score_turtle.write("Score: {}".format(score), move=False, align="center", font=FONT)
+
+    t.onclick(handle_click)
+    t.penup()
+    t.shape("turtle")
+    t.shapesize(2, 2)
+    t.color("green")
+    t.goto(x * grid_size, y * grid_size)
+    t.pendown()
+    turtle_list.append(t)
+
+x_coordinates = [-20, -10, 0, 10, 20]
+y_coordinates = [20, 10, 0, -10]
+
+def setup_turtles():
+    for x in x_coordinates:
+        for y in y_coordinates:
+            make_turtle(x, y)
+
+def hide_turtles():
+    for t in turtle_list:
+        t.hideturtle()
+
+def show_turtles_randomly():
+    if not game_over:
+        hide_turtles()
+        random.choice(turtle_list).showturtle()
+        screen.ontimer(show_turtles_randomly, 500)
+
+def countdown(time):
+    global game_over
+    top_height = screen.window_height() / 2
+    y = top_height - top_height / 10
+    count_down_turtle.hideturtle()
+    count_down_turtle.penup()
+    count_down_turtle.setposition(0, y - 30)
+    count_down_turtle.clear()
+
+    if time > 0:
+        count_down_turtle.clear()
+        count_down_turtle.write("Time: {}".format(time), move=False, align="center", font=FONT)
+        screen.ontimer(lambda: countdown(time - 1), 1000)
+    else:
+        game_over = True
+        count_down_turtle.clear()
+        hide_turtles()
+        count_down_turtle.write("Game Over!", align='center', font=FONT)
+        restart = screen.textinput("Game over!", "Do you want to restart? (y/n)")
+        if restart and restart.lower() == "y":
+            game_over = False
+            score = 0
+            screen.clear()
+            start_game_up()
+
+def start_game_up():
+    global game_over, score
+    game_over = False
+    score = 0
+    turtle.tracer(0)
+    setup_score_turtle()
+    setup_turtles()
+    hide_turtles()
+    show_turtles_randomly()
+    turtle.tracer(1)
+    screen.ontimer(lambda: countdown(10), 10)
+
+start_game_up()
+turtle.mainloop()
